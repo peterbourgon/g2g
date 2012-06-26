@@ -100,8 +100,8 @@ func TestPublish(t *testing.T) {
 
 	time.Sleep(2 * d)
 	count = mock.Count()
-	if !(2 < count && count <= 4) {
-		t.Errorf("expected 2 < publishes <= 4, got %d", count)
+	if !(1 < count && count <= 4) {
+		t.Errorf("expected 1 < publishes <= 4, got %d", count)
 	}
 	t.Logf("after second %s, count=%d", 2*d, count)
 
