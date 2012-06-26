@@ -11,6 +11,6 @@ install:
  - ln -s $HOME/builds/peterbourgon/g2g $HOME/src/g2g
 
 script:
- - cd $HOME/src/g2g && pwd && echo $GOPATH && go get -v .
+ - cd $HOME/src/g2g && pwd && echo $GOPATH && go build -v .
  - cd $HOME/src/g2g && pwd && echo $GOPATH && go test -v .
 
