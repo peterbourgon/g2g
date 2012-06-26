@@ -5,7 +5,7 @@ import (
 	"time"
 	"net"
 	"expvar"
-	"github.com/peterbourgon/bonus/xlog"
+	"log"
 )
 
 // Graphite represents a Graphite server. You Register expvars
@@ -15,12 +15,14 @@ type Graphite struct {
 	endpoint      string
 	interval      time.Duration
 	timeout       time.Duration
+	lastPublish   time.Time
 	connection    net.Conn
 	vars          map[string]expvar.Var
 	registrations chan namedVar
 	shutdown      chan chan bool
 }
 
+// A namedVar couples an expvar (interface) with an "external" name.
 type namedVar struct {
 	name string
 	v    expvar.Var
@@ -36,6 +38,7 @@ func NewGraphite(endpoint string, interval, timeout time.Duration) (*Graphite, e
 		endpoint:      endpoint,
 		interval:      interval,
 		timeout:       timeout,
+		lastPublish:   time.Now(), // baseline
 		connection:    nil,
 		vars:          map[string]expvar.Var{},
 		registrations: make(chan namedVar),
@@ -68,8 +71,7 @@ func (g *Graphite) loop() {
 		select {
 		case nv := <-g.registrations:
 			g.vars[nv.name] = nv.v
-		case <-time.After(g.interval):
-			xlog.Infof("Graphite: publishing all")
+		case <-time.After(g.nextPublishDelay()):
 			g.postAll()
 		case q := <-g.shutdown:
 			g.connection.Close()
@@ -84,13 +86,14 @@ func (g *Graphite) loop() {
 func (g *Graphite) postAll() {
 	for name, v := range g.vars {
 		if err := g.postOne(name, v.String()); err != nil {
-			xlog.Problemf("Graphite: %s: %s", name, err)
+			log.Printf("g2g: %s: %s", name, err)
 		}
 	}
+	g.lastPublish = time.Now()
 }
 
 // postOne publishes the given name-value pair to the Graphite server.
-// If the connection fails or is failed, one reconnect attempt is made.
+// If the connection is broken, one reconnect attempt is made.
 func (g *Graphite) postOne(name, value string) error {
 	if g.connection == nil {
 		if err := g.reconnect(); err != nil {
@@ -101,8 +104,7 @@ func (g *Graphite) postOne(name, value string) error {
 	if err := g.connection.SetWriteDeadline(deadline); err != nil {
 		return err
 	}
-	s := fmt.Sprintf("%s %s %d\n", name, value, time.Now().Unix())
-	b := []byte(s)
+	b := []byte(fmt.Sprintf("%s %s %d\n", name, value, time.Now().Unix()))
 	if n, err := g.connection.Write(b); err != nil {
 		return err
 	} else if n != len(b) {
@@ -119,4 +121,13 @@ func (g *Graphite) reconnect() error {
 	}
 	g.connection = conn
 	return nil
+}
+
+// nextPublishDelay calculates when the next publish action should occur
+// as a duration (from the current time).
+func (g *Graphite) nextPublishDelay() time.Duration {
+	absoluteNext := g.lastPublish.Add(g.interval)
+	deltaNext := absoluteNext.Sub(time.Now())
+	// log.Printf("next publish @ %v (∆ %v)", absoluteNext, deltaNext)
+	return deltaNext
 }
