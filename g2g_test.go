@@ -94,7 +94,7 @@ func TestPublish(t *testing.T) {
 		if err == nil || attempts > maxAttempts {
 			break
 		}
-		t.Logf("(%d/%d) %s", err)
+		t.Logf("(%d/%d) %s", attempts, maxAttempts, err)
 		time.Sleep(d)
 	}
 	if g == nil {
