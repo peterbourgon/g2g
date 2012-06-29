@@ -7,8 +7,6 @@ import (
 	"expvar"
 	"sync"
 	"strings"
-	"strconv"
-	"os"
 	"fmt"
 )
 
@@ -84,20 +82,23 @@ func (m *MockGraphite) handle(conn net.Conn) {
 func TestPublish(t *testing.T) {
 
 	// setup
-	portStr := os.Getenv("MOCK_GRAPHITE_PORT")
-	if portStr == "" {
-		portStr = "2003"
-	}
-	port, err := strconv.ParseInt(portStr, 10, 32)
-	if err != nil {
-		t.Fatalf("bad MOCK_GRAPHITE_PORT '%s': %s", portStr, err)
-	}
-
-	mock := NewMockGraphite(t, int(port))
+	port := 2003
+	mock := NewMockGraphite(t, port)
 	d := 25 * time.Millisecond
-	g, err := NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
-	if err != nil {
-		t.Fatalf("%s", err)
+	attempts, maxAttempts := 0, 3
+	var g *Graphite
+	for {
+		attempts++
+		var err error
+		g, err = NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
+		if err == nil || attempts > maxAttempts {
+			break
+		}
+		t.Logf("(%d/%d) %s", err)
+		time.Sleep(d)
+	}
+	if g == nil {
+		t.Fatalf("Mock Graphite server never came up")
 	}
 
 	// register, wait, check
