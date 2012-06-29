@@ -42,7 +42,6 @@ func main() {
 	if err != nil {
 		// do something
 	}
-
 	g.Register("foo.service.records.loaded", loadedRecords)
 
 	// ...
