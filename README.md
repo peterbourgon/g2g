@@ -2,6 +2,11 @@
 
 Get to Graphite: publish Go expvars to a Graphite server.
 
+[![Build Status][1]][2]
+
+[1]: https://secure.travis-ci.org/peterbourgon/g2g.png
+[2]: http://www.travis-ci.org/peterbourgon/g2g
+
 # Usage
 
 The assumption is that the information you want to get into Graphite is already
