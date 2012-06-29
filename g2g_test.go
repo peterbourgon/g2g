@@ -7,19 +7,24 @@ import (
 	"expvar"
 	"sync"
 	"strings"
+	"strconv"
+	"os"
+	"fmt"
 )
 
 type MockGraphite struct {
 	t     *testing.T
+	port  int
 	count int
 	mtx   sync.Mutex
 	ln    net.Listener
 	done  chan bool
 }
 
-func NewMockGraphite(t *testing.T) *MockGraphite {
+func NewMockGraphite(t *testing.T, port int) *MockGraphite {
 	m := &MockGraphite{
 		t:     t,
+		port:  port,
 		count: 0,
 		mtx:   sync.Mutex{},
 		ln:    nil,
@@ -41,7 +46,7 @@ func (m *MockGraphite) Shutdown() {
 }
 
 func (m *MockGraphite) loop() {
-	ln, err := net.Listen("tcp", ":2003")
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", m.port))
 	if err != nil {
 		panic(err)
 	}
@@ -79,9 +84,18 @@ func (m *MockGraphite) handle(conn net.Conn) {
 func TestPublish(t *testing.T) {
 
 	// setup
-	mock := NewMockGraphite(t)
+	portStr := os.Getenv("MOCK_GRAPHITE_PORT")
+	if portStr == "" {
+		portStr = "2003"
+	}
+	port, err := strconv.ParseInt(portStr, 10, 32)
+	if err != nil {
+		t.Fatalf("bad MOCK_GRAPHITE_PORT '%s': %s", portStr, err)
+	}
+
+	mock := NewMockGraphite(t, int(port))
 	d := 25 * time.Millisecond
-	g, err := NewGraphite("localhost:2003", d, d)
+	g, err := NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}

@@ -12,5 +12,5 @@ install:
 
 script:
  - cd $HOME/src/g2g && pwd && echo $GOPATH && go build -v .
- - cd $HOME/src/g2g && pwd && echo $GOPATH && go test -v .
+ - cd $HOME/src/g2g && pwd && echo $GOPATH && MOCK_GRAPHITE_PORT=22003 go test -v .
 
