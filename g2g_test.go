@@ -10,6 +10,67 @@ import (
 	"fmt"
 )
 
+func TestPublish(t *testing.T) {
+
+	// setup
+	port := 2003
+	mock := NewMockGraphite(t, port)
+	d := 25 * time.Millisecond
+	attempts, maxAttempts := 0, 3
+	var g *Graphite
+	for {
+		attempts++
+		var err error
+		g, err = NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
+		if err == nil || attempts > maxAttempts {
+			break
+		}
+		t.Logf("(%d/%d) %s", attempts, maxAttempts, err)
+		time.Sleep(d)
+	}
+	if g == nil {
+		t.Fatalf("Mock Graphite server never came up")
+	}
+
+	// register, wait, check
+	i := expvar.NewInt("i")
+	i.Set(34)
+	g.Register("test.foo.i", i)
+
+	time.Sleep(2 * d)
+	count := mock.Count()
+	if !(0 < count && count <= 2) {
+		t.Errorf("expected 0 < publishes <= 2, got %d", count)
+	}
+	t.Logf("after %s, count=%d", 2*d, count)
+
+	time.Sleep(2 * d)
+	count = mock.Count()
+	if !(1 < count && count <= 4) {
+		t.Errorf("expected 1 < publishes <= 4, got %d", count)
+	}
+	t.Logf("after second %s, count=%d", 2*d, count)
+
+	// teardown
+	ok := make(chan bool)
+	go func() {
+		g.Shutdown()
+		mock.Shutdown()
+		ok <- true
+	}()
+	select {
+	case <-ok:
+		t.Logf("shutdown OK")
+	case <-time.After(d):
+		t.Errorf("timeout during shutdown")
+	}
+
+}
+
+//
+//
+//
+
 type MockGraphite struct {
 	t     *testing.T
 	port  int
@@ -77,61 +138,4 @@ func (m *MockGraphite) handle(conn net.Conn) {
 		m.count++
 		m.mtx.Unlock()
 	}
-}
-
-func TestPublish(t *testing.T) {
-
-	// setup
-	port := 2003
-	mock := NewMockGraphite(t, port)
-	d := 25 * time.Millisecond
-	attempts, maxAttempts := 0, 3
-	var g *Graphite
-	for {
-		attempts++
-		var err error
-		g, err = NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
-		if err == nil || attempts > maxAttempts {
-			break
-		}
-		t.Logf("(%d/%d) %s", attempts, maxAttempts, err)
-		time.Sleep(d)
-	}
-	if g == nil {
-		t.Fatalf("Mock Graphite server never came up")
-	}
-
-	// register, wait, check
-	i := expvar.NewInt("i")
-	i.Set(34)
-	g.Register("test.foo.i", i)
-
-	time.Sleep(2 * d)
-	count := mock.Count()
-	if !(0 < count && count <= 2) {
-		t.Errorf("expected 0 < publishes <= 2, got %d", count)
-	}
-	t.Logf("after %s, count=%d", 2*d, count)
-
-	time.Sleep(2 * d)
-	count = mock.Count()
-	if !(1 < count && count <= 4) {
-		t.Errorf("expected 1 < publishes <= 4, got %d", count)
-	}
-	t.Logf("after second %s, count=%d", 2*d, count)
-
-	// teardown
-	ok := make(chan bool)
-	go func() {
-		g.Shutdown()
-		mock.Shutdown()
-		ok <- true
-	}()
-	select {
-	case <-ok:
-		t.Logf("shutdown OK")
-	case <-time.After(d):
-		t.Errorf("timeout during shutdown")
-	}
-
 }
