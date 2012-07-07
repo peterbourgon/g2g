@@ -15,7 +15,6 @@ type Graphite struct {
 	endpoint      string
 	interval      time.Duration
 	timeout       time.Duration
-	lastPublish   time.Time
 	connection    net.Conn
 	vars          map[string]expvar.Var
 	registrations chan namedVar
@@ -38,7 +37,6 @@ func NewGraphite(endpoint string, interval, timeout time.Duration) (*Graphite, e
 		endpoint:      endpoint,
 		interval:      interval,
 		timeout:       timeout,
-		lastPublish:   time.Now(), // baseline
 		connection:    nil,
 		vars:          map[string]expvar.Var{},
 		registrations: make(chan namedVar),
@@ -67,11 +65,13 @@ func (g *Graphite) Shutdown() {
 }
 
 func (g *Graphite) loop() {
+	ticker := time.NewTicker(g.interval)
+	defer ticker.Stop()
 	for {
 		select {
 		case nv := <-g.registrations:
 			g.vars[nv.name] = nv.v
-		case <-time.After(g.nextPublishDelay()):
+		case <-ticker.C:
 			g.postAll()
 		case q := <-g.shutdown:
 			g.connection.Close()
@@ -89,7 +89,6 @@ func (g *Graphite) postAll() {
 			log.Printf("g2g: %s: %s", name, err)
 		}
 	}
-	g.lastPublish = time.Now()
 }
 
 // postOne publishes the given name-value pair to the Graphite server.
@@ -121,13 +120,4 @@ func (g *Graphite) reconnect() error {
 	}
 	g.connection = conn
 	return nil
-}
-
-// nextPublishDelay calculates when the next publish action should occur
-// as a duration (from the current time).
-func (g *Graphite) nextPublishDelay() time.Duration {
-	absoluteNext := g.lastPublish.Add(g.interval)
-	deltaNext := absoluteNext.Sub(time.Now())
-	// log.Printf("next publish @ %v (∆ %v)", absoluteNext, deltaNext)
-	return deltaNext
 }
