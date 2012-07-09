@@ -13,10 +13,7 @@ script:
  - pwd
  - ls -ltr $GOPATH
  - ls -ltr $GOPATH/src
- - # ln -s $HOME/builds/peterbourgon/g2g $GOPATH/src/g2g
- - cp ./*.go $GOPATH/src/g2g
- - cd $GOPATH/src/g2g
- - pwd
- - go get -v .
- - go test -v .
+ - ln -s $HOME/builds/peterbourgon/g2g $GOPATH/src/g2g
+ - go get -v g2g
+ - go test -v g2g
 
