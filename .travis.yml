@@ -6,6 +6,6 @@ install:
 script:
  - mkdir -p $GOPATH/bin
  - mkdir -p $GOPATH/pkg
- - pwd && go get -v .
+ - pwd && go build -v .
  - pwd && go test -v .
 
