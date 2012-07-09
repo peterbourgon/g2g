@@ -4,8 +4,8 @@ install:
  - echo "install steps are now empty"
 
 script:
- - export GOPATH=$HOME/gopath
- - mkdir -p $HOME/gopath/src/g2g
+ - export GOPATH=$HOME/mygopath
+ - mkdir -p $GOPATH/src/g2g
  - cp $HOME/builds/peterbourgon/g2g/*.go $GOPATH/src/g2g
  - cd $GOPATH/src/g2g
  - go get -v .
