@@ -96,16 +96,16 @@ func (g *Graphite) postAll() {
 func (g *Graphite) postOne(name, value string) error {
 	if g.connection == nil {
 		if err := g.reconnect(); err != nil {
-			return err
+			return fmt.Errorf("failed; reconnect attempt: %s", err)
 		}
 	}
 	deadline := time.Now().Add(g.timeout)
 	if err := g.connection.SetWriteDeadline(deadline); err != nil {
-		return err
+		return fmt.Errorf("SetWriteDeadline: %s", err)
 	}
 	b := []byte(fmt.Sprintf("%s %s %d\n", name, value, time.Now().Unix()))
 	if n, err := g.connection.Write(b); err != nil {
-		return err
+		return fmt.Errorf("Write: %s", err)
 	} else if n != len(b) {
 		return fmt.Errorf("%s = %v: short write: %d/%d", name, value, n, len(b))
 	}
