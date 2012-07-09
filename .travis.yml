@@ -1,13 +1,8 @@
-language: erlang # wither art thou, Go?
+language: go
 
 install:
- - mkdir -p $HOME/src || true
- - mkdir -p $HOME/bin || true
- - mkdir -p $HOME/pkg || true
- - export GOPATH=$HOME
- - ln -s $HOME/builds/peterbourgon/g2g $HOME/src/g2g
+ - echo "install steps are now empty"
 
 script:
- - cd $HOME/src/g2g && pwd && echo $GOPATH && go build -v .
- - cd $HOME/src/g2g && pwd && echo $GOPATH && go test -v .
+ - echo "script steps are now empty"
 
