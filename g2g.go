@@ -101,12 +101,15 @@ func (g *Graphite) postOne(name, value string) error {
 	}
 	deadline := time.Now().Add(g.timeout)
 	if err := g.connection.SetWriteDeadline(deadline); err != nil {
+		g.connection = nil
 		return fmt.Errorf("SetWriteDeadline: %s", err)
 	}
 	b := []byte(fmt.Sprintf("%s %s %d\n", name, value, time.Now().Unix()))
 	if n, err := g.connection.Write(b); err != nil {
+		g.connection = nil
 		return fmt.Errorf("Write: %s", err)
 	} else if n != len(b) {
+		g.connection = nil
 		return fmt.Errorf("%s = %v: short write: %d/%d", name, value, n, len(b))
 	}
 	return nil
