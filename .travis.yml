@@ -4,5 +4,6 @@ install:
  - echo "install steps are now empty"
 
 script:
- - echo "script steps are now empty"
+ - go get -v .
+ - go test -v .
 
