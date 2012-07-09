@@ -4,6 +4,6 @@ install:
  - echo "install steps are now empty"
 
 script:
- - go get -v .
- - go test -v .
+ - pwd && go get -v .
+ - pwd && go test -v .
 
