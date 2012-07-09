@@ -4,6 +4,8 @@ install:
  - echo "install steps are now empty"
 
 script:
+ - mkdir -p $GOPATH/bin
+ - mkdir -p $GOPATH/pkg
  - pwd && go get -v .
  - pwd && go test -v .
 
