@@ -1,11 +1,2 @@
 language: go
 
-install:
- - echo "install steps are now empty"
-
-script:
- - echo $GOPATH
- - pwd
- - go get -v .
- - go test -v .
-
