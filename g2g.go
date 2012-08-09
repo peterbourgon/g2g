@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -82,10 +84,25 @@ func (g *Graphite) loop() {
 	}
 }
 
+// roundFloat will attempt to parse the passed string as a float.
+// If it succeeds, it will return the same float, rounded at n decimal places.
+// If it fails, it will return the original string.
+func roundFloat(s string, n int) string {
+	if len(strings.Split(s, ".")) != 2 {
+		return s
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return s
+	}
+	format := fmt.Sprintf("%%.%df", n)
+	return fmt.Sprintf(format, f)
+}
+
 // postAll publishes all Registered expvars to the Graphite server.
 func (g *Graphite) postAll() {
 	for name, v := range g.vars {
-		val := v.String()
+		val := roundFloat(v.String(), 2)
 		if err := g.postOne(name, val); err != nil {
 			log.Printf("g2g: %s: %s", name, err)
 		} else {

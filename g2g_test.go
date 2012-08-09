@@ -1,13 +1,13 @@
 package g2g
 
 import (
-	"testing"
-	"net"
-	"time"
 	"expvar"
-	"sync"
-	"strings"
 	"fmt"
+	"net"
+	"strings"
+	"sync"
+	"testing"
+	"time"
 )
 
 func TestPublish(t *testing.T) {
@@ -65,6 +65,30 @@ func TestPublish(t *testing.T) {
 		t.Errorf("timeout during shutdown")
 	}
 
+}
+
+func TestRoundFloat(t *testing.T) {
+	m := map[string]string{
+		"abc":   "abc",
+		"0.00.": "0.00.",
+		"123":   "123",
+		"1.2.3": "1.2.3",
+
+		"1.00":        "1.00",
+		"1.001":       "1.00",
+		"1.00000001":  "1.00",
+		"0.00001":     "0.00",
+		"0.01000":     "0.01",
+		"0.01999":     "0.02",
+		"-1.234":      "-1.23",
+		"123.456":     "123.46",
+		"99999.09123": "99999.09",
+	}
+	for s, expected := range m {
+		if got := roundFloat(s, 2); got != expected {
+			t.Errorf("%s: got %s, expected %s", s, got, expected)
+		}
+	}
 }
 
 //
