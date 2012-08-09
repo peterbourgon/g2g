@@ -105,8 +105,6 @@ func (g *Graphite) postAll() {
 		val := roundFloat(v.String(), 2)
 		if err := g.postOne(name, val); err != nil {
 			log.Printf("g2g: %s: %s", name, err)
-		} else {
-			log.Printf("g2g: %s = %s (OK)", name, val)
 		}
 	}
 }
