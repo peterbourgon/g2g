@@ -1,11 +1,11 @@
 package g2g
 
 import (
-	"fmt"
-	"time"
-	"net"
 	"expvar"
+	"fmt"
 	"log"
+	"net"
+	"time"
 )
 
 // Graphite represents a Graphite server. You Register expvars
@@ -85,8 +85,11 @@ func (g *Graphite) loop() {
 // postAll publishes all Registered expvars to the Graphite server.
 func (g *Graphite) postAll() {
 	for name, v := range g.vars {
-		if err := g.postOne(name, v.String()); err != nil {
+		val := v.String()
+		if err := g.postOne(name, val); err != nil {
 			log.Printf("g2g: %s: %s", name, err)
+		} else {
+			log.Printf("g2g: %s = %s (OK)", name, val)
 		}
 	}
 }
