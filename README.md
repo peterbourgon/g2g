@@ -7,6 +7,9 @@ Get to Graphite: publish Go expvars to a Graphite server.
 [1]: https://secure.travis-ci.org/peterbourgon/g2g.png
 [2]: http://www.travis-ci.org/peterbourgon/g2g
 
+**See also** [g2s: Get to Statsd](https://github.com/peterbourgon/g2s), to emit
+statistics to a Statsd server.
+
 # Usage
 
 The assumption is that the information you want to get into Graphite is already
