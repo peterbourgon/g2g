@@ -35,7 +35,7 @@ type namedVar struct {
 // Endpoint should be of the format "host:port", eg. "stats:2003".
 // Interval is the (best-effort) minimum duration between (sequential)
 // publishments of Registered expvars. Timeout is per-publish-action.
-func NewGraphite(endpoint string, interval, timeout time.Duration) (*Graphite, error) {
+func NewGraphite(endpoint string, interval, timeout time.Duration) *Graphite {
 	g := &Graphite{
 		endpoint:      endpoint,
 		interval:      interval,
@@ -46,7 +46,7 @@ func NewGraphite(endpoint string, interval, timeout time.Duration) (*Graphite, e
 		shutdown:      make(chan chan bool),
 	}
 	go g.loop()
-	return g, nil
+	return g
 }
 
 // Register registers an expvar under the given name. (Roughly) every

@@ -16,21 +16,9 @@ func TestPublish(t *testing.T) {
 	port := 2003
 	mock := NewMockGraphite(t, port)
 	d := 25 * time.Millisecond
-	attempts, maxAttempts := 0, 3
 	var g *Graphite
-	for {
-		attempts++
-		var err error
-		g, err = NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
-		if err == nil || attempts > maxAttempts {
-			break
-		}
-		t.Logf("(%d/%d) %s", attempts, maxAttempts, err)
-		time.Sleep(d)
-	}
-	if g == nil {
-		t.Fatalf("Mock Graphite server never came up")
-	}
+	g = NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
+	time.Sleep(d)
 
 	// register, wait, check
 	i := expvar.NewInt("i")
