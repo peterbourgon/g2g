@@ -29,12 +29,13 @@ type namedVar struct {
 	v    expvar.Var
 }
 
-// NewGraphite returns a Graphite structure with an open and working
-// connection, but no active/registered variables being published.
+// NewGraphite returns a Graphite structure with no active/registered
+// variables being published.  The connection setup is lazy, e.g. it is
+// done at the first metric submission.
 // Endpoint should be of the format "host:port", eg. "stats:2003".
 // Interval is the (best-effort) minimum duration between (sequential)
 // publishments of Registered expvars. Timeout is per-publish-action.
-func NewGraphite(endpoint string, interval, timeout time.Duration) (*Graphite, error) {
+func NewGraphite(endpoint string, interval, timeout time.Duration) *Graphite {
 	g := &Graphite{
 		endpoint:      endpoint,
 		interval:      interval,
@@ -44,11 +45,8 @@ func NewGraphite(endpoint string, interval, timeout time.Duration) (*Graphite, e
 		registrations: make(chan namedVar),
 		shutdown:      make(chan chan bool),
 	}
-	if err := g.reconnect(); err != nil {
-		return nil, err
-	}
 	go g.loop()
-	return g, nil
+	return g
 }
 
 // Register registers an expvar under the given name. (Roughly) every

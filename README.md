@@ -41,10 +41,7 @@ func main() {
 
 	interval := 30 * time.Second
 	timeout := 3 * time.Second
-	g, err := g2g.NewGraphite("graphite-server:2003", interval, timeout)
-	if err != nil {
-		// do something
-	}
+	g := g2g.NewGraphite("graphite-server:2003", interval, timeout)
 	g.Register("foo.service.records.loaded", loadedRecords)
 
 	// ...
