@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+const (
+	UnixSocketPrefix = "unix://"
+)
+
 // Graphite represents a Graphite server. You Register expvars
 // in this struct, which will be published to the server on a
 // regular interval.
@@ -133,7 +137,11 @@ func (g *Graphite) postOne(name, value string) error {
 
 // reconnect attempts to (re-)establish a TCP connection to the Graphite server.
 func (g *Graphite) reconnect() error {
-	conn, err := net.Dial("tcp", g.endpoint)
+	proto := "tcp"
+	if strings.HasPrefix(g.endpoint, UnixSocketPrefix) {
+		proto = "unix"
+	}
+	conn, err := net.Dial(proto, strings.TrimPrefix(g.endpoint, UnixSocketPrefix))
 	if err != nil {
 		return err
 	}
