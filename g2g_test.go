@@ -118,7 +118,7 @@ func (m *MockGraphite) Shutdown() {
 }
 
 func (m *MockGraphite) loop() {
-	network, address := SplitEndpoint(m.address)
+	network, address := splitEndpoint(m.address)
 	ln, err := net.Listen(network, address)
 	if err != nil {
 		panic(err)

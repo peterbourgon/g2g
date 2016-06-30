@@ -34,10 +34,10 @@ type namedVar struct {
 	v    expvar.Var
 }
 
-// SplitEndpoint splits the provided endpoint string into its network and address
+// splitEndpoint splits the provided endpoint string into its network and address
 // parts. It will default to 'tcp' network to ensure backward compatibility when
 // the endpoint is not prefixed with a network:// part.
-func SplitEndpoint(endpoint string) (string, string) {
+func splitEndpoint(endpoint string) (string, string) {
 	network := "tcp"
 	idx := strings.Index(endpoint, NetworkSeparator)
 	if idx != -1 {
@@ -53,7 +53,7 @@ func SplitEndpoint(endpoint string) (string, string) {
 // Interval is the (best-effort) minimum duration between (sequential)
 // publishments of Registered expvars. Timeout is per-publish-action.
 func NewGraphite(endpoint string, interval, timeout time.Duration) *Graphite {
-	network, endpoint := SplitEndpoint(endpoint)
+	network, endpoint := splitEndpoint(endpoint)
 	g := &Graphite{
 		network:       network,
 		endpoint:      endpoint,
