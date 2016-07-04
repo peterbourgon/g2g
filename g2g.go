@@ -10,10 +10,15 @@ import (
 	"time"
 )
 
+const (
+	networkSeparator = "://"
+)
+
 // Graphite represents a Graphite server. You Register expvars
 // in this struct, which will be published to the server on a
 // regular interval.
 type Graphite struct {
+	network       string
 	endpoint      string
 	interval      time.Duration
 	timeout       time.Duration
@@ -29,14 +34,28 @@ type namedVar struct {
 	v    expvar.Var
 }
 
+// splitEndpoint splits the provided endpoint string into its network and address
+// parts. It will default to 'tcp' network to ensure backward compatibility when
+// the endpoint is not prefixed with a network:// part.
+func splitEndpoint(endpoint string) (string, string) {
+	network := "tcp"
+	idx := strings.Index(endpoint, networkSeparator)
+	if idx != -1 {
+		network, endpoint = endpoint[:idx], endpoint[idx+len(networkSeparator):]
+	}
+	return network, endpoint
+}
+
 // NewGraphite returns a Graphite structure with no active/registered
 // variables being published.  The connection setup is lazy, e.g. it is
 // done at the first metric submission.
-// Endpoint should be of the format "host:port", eg. "stats:2003".
+// Endpoint should be of the format "network://host:port", eg. "tcp://stats:2003".
 // Interval is the (best-effort) minimum duration between (sequential)
 // publishments of Registered expvars. Timeout is per-publish-action.
 func NewGraphite(endpoint string, interval, timeout time.Duration) *Graphite {
+	network, endpoint := splitEndpoint(endpoint)
 	g := &Graphite{
+		network:       network,
 		endpoint:      endpoint,
 		interval:      interval,
 		timeout:       timeout,
@@ -133,7 +152,7 @@ func (g *Graphite) postOne(name, value string) error {
 
 // reconnect attempts to (re-)establish a TCP connection to the Graphite server.
 func (g *Graphite) reconnect() error {
-	conn, err := net.Dial("tcp", g.endpoint)
+	conn, err := net.Dial(g.network, g.endpoint)
 	if err != nil {
 		return err
 	}

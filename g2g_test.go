@@ -2,7 +2,6 @@ package g2g
 
 import (
 	"expvar"
-	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -10,20 +9,22 @@ import (
 	"time"
 )
 
-func TestPublish(t *testing.T) {
+var testExpvar = expvar.NewInt("i")
 
+func TestPublish(t *testing.T) {
+	testPub(t, "localhost:2003", NewMockGraphite(t, "tcp://:2003"))
+	testPub(t, "unix:///tmp/test.sock", NewMockGraphite(t, "unix:///tmp/test.sock"))
+}
+
+func testPub(t *testing.T, address string, mock *MockGraphite) {
 	// setup
-	port := 2003
-	mock := NewMockGraphite(t, port)
 	d := 25 * time.Millisecond
 	var g *Graphite
-	g = NewGraphite(fmt.Sprintf("localhost:%d", port), d, d)
-	time.Sleep(d)
+	g = NewGraphite(address, d, d)
 
 	// register, wait, check
-	i := expvar.NewInt("i")
-	i.Set(34)
-	g.Register("test.foo.i", i)
+	testExpvar.Set(34)
+	g.Register("test.foo.i", testExpvar)
 
 	time.Sleep(2 * d)
 	count := mock.Count()
@@ -84,22 +85,25 @@ func TestRoundFloat(t *testing.T) {
 //
 
 type MockGraphite struct {
-	t     *testing.T
-	port  int
-	count int
-	mtx   sync.Mutex
-	ln    net.Listener
-	done  chan bool
+	t       *testing.T
+	network string
+	address string
+	count   int
+	mtx     sync.Mutex
+	ln      net.Listener
+	done    chan bool
 }
 
-func NewMockGraphite(t *testing.T, port int) *MockGraphite {
+func NewMockGraphite(t *testing.T, address string) *MockGraphite {
+	network, address := splitEndpoint(address)
 	m := &MockGraphite{
-		t:     t,
-		port:  port,
-		count: 0,
-		mtx:   sync.Mutex{},
-		ln:    nil,
-		done:  make(chan bool, 1),
+		t:       t,
+		network: network,
+		address: address,
+		count:   0,
+		mtx:     sync.Mutex{},
+		ln:      nil,
+		done:    make(chan bool, 1),
 	}
 	go m.loop()
 	return m
@@ -117,7 +121,7 @@ func (m *MockGraphite) Shutdown() {
 }
 
 func (m *MockGraphite) loop() {
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", m.port))
+	ln, err := net.Listen(m.network, m.address)
 	if err != nil {
 		panic(err)
 	}
