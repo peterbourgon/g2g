@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var i = expvar.NewInt("i")
+var testExpvar = expvar.NewInt("i")
 
 func TestPublish(t *testing.T) {
 	testPub(t, "localhost:2003", NewMockGraphite(t, "tcp://:2003"))
@@ -23,8 +23,8 @@ func testPub(t *testing.T, address string, mock *MockGraphite) {
 	g = NewGraphite(address, d, d)
 
 	// register, wait, check
-	i.Set(34)
-	g.Register("test.foo.i", i)
+	testExpvar.Set(34)
+	g.Register("test.foo.i", testExpvar)
 
 	time.Sleep(2 * d)
 	count := mock.Count()
@@ -86,6 +86,7 @@ func TestRoundFloat(t *testing.T) {
 
 type MockGraphite struct {
 	t       *testing.T
+	network string
 	address string
 	count   int
 	mtx     sync.Mutex
@@ -94,8 +95,10 @@ type MockGraphite struct {
 }
 
 func NewMockGraphite(t *testing.T, address string) *MockGraphite {
+	network, address := splitEndpoint(address)
 	m := &MockGraphite{
 		t:       t,
+		network: network,
 		address: address,
 		count:   0,
 		mtx:     sync.Mutex{},
@@ -118,8 +121,7 @@ func (m *MockGraphite) Shutdown() {
 }
 
 func (m *MockGraphite) loop() {
-	network, address := splitEndpoint(m.address)
-	ln, err := net.Listen(network, address)
+	ln, err := net.Listen(m.network, m.address)
 	if err != nil {
 		panic(err)
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	NetworkSeparator = "://"
+	networkSeparator = "://"
 )
 
 // Graphite represents a Graphite server. You Register expvars
@@ -39,9 +39,9 @@ type namedVar struct {
 // the endpoint is not prefixed with a network:// part.
 func splitEndpoint(endpoint string) (string, string) {
 	network := "tcp"
-	idx := strings.Index(endpoint, NetworkSeparator)
+	idx := strings.Index(endpoint, networkSeparator)
 	if idx != -1 {
-		network, endpoint = endpoint[:idx], endpoint[idx+len(NetworkSeparator):]
+		network, endpoint = endpoint[:idx], endpoint[idx+len(networkSeparator):]
 	}
 	return network, endpoint
 }
