@@ -116,8 +116,10 @@ func (m *MockGraphite) Count() int {
 }
 
 func (m *MockGraphite) Shutdown() {
-	m.ln.Close()
-	<-m.done
+	if m.ln != nil {
+		m.ln.Close()
+		<-m.done
+	}
 }
 
 func (m *MockGraphite) loop() {
