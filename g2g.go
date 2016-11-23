@@ -93,8 +93,10 @@ func (g *Graphite) loop() {
 		case <-ticker.C:
 			g.postAll()
 		case q := <-g.shutdown:
-			g.connection.Close()
-			g.connection = nil
+			if g.connection != nil {
+				g.connection.Close()
+				g.connection = nil
+			}
 			q <- true
 			return
 		}
